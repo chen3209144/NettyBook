@@ -61,6 +61,7 @@ import javax.activation.MimetypesFileTypeMap;
  * @author lilinfeng
  * @date 2014年2月14日
  * @version 1.0
+ * 文件服务器处理,提供对请求url的权限验证,如果是目录则返回一些列表,如果是文件则直接开启下载.
  */
 public class HttpFileServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 	private final String url;
@@ -69,6 +70,9 @@ public class HttpFileServerHandler extends SimpleChannelInboundHandler<FullHttpR
 		this.url = url;
 	}
 
+	/**
+	 * 客户端向服务器发送的消息到达服务器后触发这个方法.
+	 */
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
 		if (!request.getDecoderResult().isSuccess()) {
@@ -79,6 +83,7 @@ public class HttpFileServerHandler extends SimpleChannelInboundHandler<FullHttpR
 			sendError(ctx, METHOD_NOT_ALLOWED);
 			return;
 		}
+		//去掉主机名与端口的uri
 		final String uri = request.getUri();
 		final String path = sanitizeUri(uri);
 		if (path == null) {
@@ -94,6 +99,7 @@ public class HttpFileServerHandler extends SimpleChannelInboundHandler<FullHttpR
 			if (uri.endsWith("/")) {
 				sendListing(ctx, file);
 			} else {
+				//如果目录不带"/",则在原来的uri上加"/"后缀,并通知客户端以新的uri访问一次.
 				sendRedirect(ctx, uri + '/');
 			}
 			return;
@@ -102,6 +108,7 @@ public class HttpFileServerHandler extends SimpleChannelInboundHandler<FullHttpR
 			sendError(ctx, FORBIDDEN);
 			return;
 		}
+		//如果是文件,则构建一个下载文件的响应报文,包含文凭长度,文件类型等信息.并发送此响应.
 		RandomAccessFile randomAccessFile = null;
 		try {
 			randomAccessFile = new RandomAccessFile(file, "r");// 以只读的方式打开文件
@@ -116,8 +123,10 @@ public class HttpFileServerHandler extends SimpleChannelInboundHandler<FullHttpR
 		if (isKeepAlive(request)) {
 			response.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
 		}
+		//发送文件下载信息报文响应信息.
 		ctx.write(response);
 		ChannelFuture sendFileFuture;
+		//将文件内容写入channel,并向客户端发送.
 		sendFileFuture = ctx.write(new ChunkedFile(randomAccessFile, 0, fileLength, 8192), ctx.newProgressivePromise());
 		sendFileFuture.addListener(new ChannelProgressiveFutureListener() {
 			@Override
@@ -134,6 +143,7 @@ public class HttpFileServerHandler extends SimpleChannelInboundHandler<FullHttpR
 				System.out.println("Transfer complete.");
 			}
 		});
+		//向channel定入报文结束标志.
 		ChannelFuture lastContentFuture = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 		if (!isKeepAlive(request)) {
 			lastContentFuture.addListener(ChannelFutureListener.CLOSE);
@@ -150,6 +160,11 @@ public class HttpFileServerHandler extends SimpleChannelInboundHandler<FullHttpR
 
 	private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
 
+	/**
+	 * 根据请求uri,返回对应本机文件地址.
+	 * @param uri
+	 * @return uir对目录或者文件的在本地机的路径.
+	 */
 	private String sanitizeUri(String uri) {
 		try {
 			uri = URLDecoder.decode(uri, "UTF-8");
@@ -160,6 +175,7 @@ public class HttpFileServerHandler extends SimpleChannelInboundHandler<FullHttpR
 				throw new Error();
 			}
 		}
+		//如果访问的uri不是{/127.0.0.1:8080/src/com/phei/netty/}或者不是其子目录.
 		if (!uri.startsWith(url)) {
 			return null;
 		}
@@ -171,11 +187,17 @@ public class HttpFileServerHandler extends SimpleChannelInboundHandler<FullHttpR
 				|| uri.endsWith(".") || INSECURE_URI.matcher(uri).matches()) {
 			return null;
 		}
+		//System.getProperty("user.dir") 获取当前程序所在和工程目录.
 		return System.getProperty("user.dir") + File.separator + uri;
 	}
 
 	private static final Pattern ALLOWED_FILE_NAME = Pattern.compile("[A-Za-z0-9][-_A-Za-z0-9\\.]*");
 
+	/**
+	 * 根据给定的目录,生成一傲段用于展示目录的html代码作为消息,并构建Http响应报文,将消息放入响应报文中,并发送给客户端.
+	 * @param ctx 使用此形参可以向客户端发送响应报文.
+	 * @param dir 给定的目录.
+	 */
 	private static void sendListing(ChannelHandlerContext ctx, File dir) {
 		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
 		response.headers().set(CONTENT_TYPE, "text/html; charset=UTF-8");
@@ -212,12 +234,22 @@ public class HttpFileServerHandler extends SimpleChannelInboundHandler<FullHttpR
 		ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
 	}
 
+	/**
+	 * 根据给定的uri,构造一个要求客户端进行请求重定位的响应报文.并将响应报文发送给客户端.
+	 * @param ctx 通过此形参可以向客户端发送响应报文.
+	 * @param newUri 给定的Uri.
+	 */
 	private static void sendRedirect(ChannelHandlerContext ctx, String newUri) {
 		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, FOUND);
 		response.headers().set(LOCATION, newUri);
 		ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
 	}
 
+	/**
+	 * 根据指定的 Http响应状态值(一般是错误或者异常的状态值),构建一个Http响应报文,并发送到客户端.
+	 * @param ctx 可通过些形参向客户端发送响应报文.
+	 * @param status http响应状态值.
+	 */
 	private static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status) {
 		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, status,
 				Unpooled.copiedBuffer("Failure: " + status.toString() + "\r\n", CharsetUtil.UTF_8));

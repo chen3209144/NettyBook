@@ -27,13 +27,11 @@ import java.util.concurrent.CountDownLatch;
  */
 public class AsyncTimeServerHandler implements Runnable {
 
-	private int port;
 
 	CountDownLatch latch;
 	AsynchronousServerSocketChannel asynchronousServerSocketChannel;
 
 	public AsyncTimeServerHandler(int port) {
-		this.port = port;
 		try {
 			asynchronousServerSocketChannel = AsynchronousServerSocketChannel.open();
 			asynchronousServerSocketChannel.bind(new InetSocketAddress(port));
