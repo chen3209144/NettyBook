@@ -24,7 +24,7 @@ import io.netty.handler.codec.http.FullHttpResponse;
  */
 public class HttpXmlResponse {
     private FullHttpResponse httpResponse;
-    private Object result;
+	private Object result;
 
     public HttpXmlResponse(FullHttpResponse httpResponse, Object result) {
 	this.httpResponse = httpResponse;

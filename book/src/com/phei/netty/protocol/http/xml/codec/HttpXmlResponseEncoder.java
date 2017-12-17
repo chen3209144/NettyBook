@@ -31,29 +31,29 @@ import java.util.List;
  * @date 2014年3月1日
  * @version 1.0
  */
-public class HttpXmlResponseEncoder extends
-	AbstractHttpXmlEncoder<HttpXmlResponse> {
+public class HttpXmlResponseEncoder extends AbstractHttpXmlEncoder<HttpXmlResponse> {
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * io.netty.handler.codec.MessageToMessageEncoder#encode(io.netty.channel
-     * .ChannelHandlerContext, java.lang.Object, java.util.List)
-     */
-    protected void encode(ChannelHandlerContext ctx, HttpXmlResponse msg,
-	    List<Object> out) throws Exception {
-	ByteBuf body = encode0(ctx, msg.getResult());
-	FullHttpResponse response = msg.getHttpResponse();
-	if (response == null) {
-	    response = new DefaultFullHttpResponse(HTTP_1_1, OK, body);
-	} else {
-	    response = new DefaultFullHttpResponse(msg.getHttpResponse()
-		    .getProtocolVersion(), msg.getHttpResponse().getStatus(),
-		    body);
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see io.netty.handler.codec.MessageToMessageEncoder#encode(io.netty.channel
+	 * .ChannelHandlerContext, java.lang.Object, java.util.List)
+	 */
+	protected void encode(ChannelHandlerContext ctx, HttpXmlResponse msg, List<Object> out) throws Exception {
+		//将业务层递交的pojo(HttpXmlResponseEncoder是响应消息经过的第一个编码器,会直接收到业务层的消息)转换为xml字符串.
+		ByteBuf body = encode0(ctx, msg.getResult());
+		FullHttpResponse response = msg.getHttpResponse();
+		//业务层可能会递交空的reponse对象.
+		if (response == null) {
+			response = new DefaultFullHttpResponse(HTTP_1_1, OK, body);
+		} else {
+			response = new DefaultFullHttpResponse(msg.getHttpResponse().getProtocolVersion(),
+					msg.getHttpResponse().getStatus(), body);
+		}
+		response.headers().set(CONTENT_TYPE, "text/xml");
+		//将解析好的xml设置为响应对象的消息体.
+		setContentLength(response, body.readableBytes());
+		//将response递交给下一个编码器,如HttpResponseEncoder可以将response编码为Http响应报文.
+		out.add(response);
 	}
-	response.headers().set(CONTENT_TYPE, "text/xml");
-	setContentLength(response, body.readableBytes());
-	out.add(response);
-    }
 }

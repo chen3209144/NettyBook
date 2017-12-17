@@ -27,7 +27,6 @@ import java.util.concurrent.CountDownLatch;
  */
 public class AsyncTimeServerHandler implements Runnable {
 
-
 	CountDownLatch latch;
 	AsynchronousServerSocketChannel asynchronousServerSocketChannel;
 
