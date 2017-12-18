@@ -22,6 +22,7 @@ public class Order {
 
 	private Float total;
 
+	
 	public long getOrderNumber() {
 		return orderNumber;
 	}

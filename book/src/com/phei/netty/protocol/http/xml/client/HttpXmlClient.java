@@ -50,6 +50,7 @@ public class HttpXmlClient {
 			.option(ChannelOption.TCP_NODELAY, true)
 			.handler(new ChannelInitializer<SocketChannel>() {
 						@Override
+						//客户端收到来自己服务器的信息时,Netty会为服务器构建一个channel,构建完成时激此方法.
 						public void initChannel(SocketChannel ch) throws Exception {
 							/**
 							 * 客户端消息解码过程(针对响应对象)
@@ -62,6 +63,7 @@ public class HttpXmlClient {
 							 * 1,业务层递交pojo对象,先调用HttpXmlRequestEncoder编码器,将pojo对象编辑为xml格式的字符,并设置为Request对象的消息内容.
 							 * 2,调用HttpRequestEncoder将Response对象解析为Http请求报文.
 							 */
+							System.out.println("客户端为服务器构建channel对象完成,开始设置编码器和解码器.");;
 							//响应消息解码器(xml->pojo)
 							ch.pipeline().addLast("http-decoder", new HttpResponseDecoder());
 							// 目的是将多个消息转换为单一的request或者response对象

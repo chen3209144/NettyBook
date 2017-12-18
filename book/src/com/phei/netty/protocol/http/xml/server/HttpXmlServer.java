@@ -25,9 +25,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
-
 import java.net.InetSocketAddress;
-
 import com.phei.netty.protocol.http.xml.codec.HttpXmlRequestDecoder;
 import com.phei.netty.protocol.http.xml.codec.HttpXmlResponseEncoder;
 import com.phei.netty.protocol.http.xml.pojo.Order;
@@ -47,6 +45,7 @@ public class HttpXmlServer {
 			.channel(NioServerSocketChannel.class)
 			.childHandler(new ChannelInitializer<SocketChannel>() {
 						@Override
+						//客户端请求服务器时,Netty框架为这个客户完成初始化channel操作之后,调用这个方法.
 						protected void initChannel(SocketChannel ch) throws Exception {
 							/**
 							 * 服务器解码过程(针对请求对象)
@@ -59,6 +58,7 @@ public class HttpXmlServer {
 							 * 1,业务层递交pojo对象,先调用HttpXmlResponseEncoder将pojo对象编码为xml格式的字符串.将将转换好的xml设置为reponse的消息体.
 							 * 2,HttpResponseEncoder将response解码为http响应报文.
 							 */
+							System.out.println("服务器收到一个客户端请求,并为客户端构建了channel对象,现在给channel设置解码器和编码器.");
 							ch.pipeline().addLast("http-decoder", new HttpRequestDecoder());
 							ch.pipeline().addLast("http-aggregator", new HttpObjectAggregator(65536));
 							ch.pipeline().addLast("xml-decoder", new HttpXmlRequestDecoder(Order.class, true));
@@ -68,7 +68,8 @@ public class HttpXmlServer {
 						}
 					});
 			ChannelFuture future = b.bind(new InetSocketAddress(port)).sync();
-			System.out.println("HTTP订购服务器启动，网址是 : " + "http://localhost:" + port);
+			//这个例子原来也想的文件服务器一样通过 future.channel().localAddress()接口获得,服务器启动后的网址,但此处调用这个接口,并没有获取正确的ip地址.
+			System.out.println("HTTP订购服务器启动，网址是 :" + "http://127.0.0.1:8080");
 			future.channel().closeFuture().sync();
 		} finally {
 			bossGroup.shutdownGracefully();

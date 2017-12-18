@@ -46,13 +46,18 @@ public class HttpXmlRequestDecoder extends AbstractHttpXmlDecoder<FullHttpReques
 
 	@Override
 	protected void decode(ChannelHandlerContext arg0, FullHttpRequest arg1, List<Object> arg2) throws Exception {
+		System.out.println("请求消息解码器(HttpXmlRequestDecoder)开始解码.");
 		if (!arg1.getDecoderResult().isSuccess()) {
+			System.out.println("客户端请求失败.");
 			sendError(arg0, BAD_REQUEST);
 			return;
 		}
+		System.out.println("待解码消息{"+arg1.content()+"}.");
 		//将request对象的消息体(xml)转换为pojo对象,并封装到HttpXmlRequest
 		HttpXmlRequest request = new HttpXmlRequest(arg1, decode0(arg0, arg1.content()));
+		System.out.println("解码后消息{"+request.getBody()+"}.");
 		//将HttpXmlRequest递交到一个编码器(如果是最后一个编码器,Netty会将此对象递交给业务层.)
+		System.out.println("向业务层递交request(HttpXmlRequestDecoder是请求消息到过业务层之前经过的最后一个解码器)");
 		arg2.add(request);
 	}
 

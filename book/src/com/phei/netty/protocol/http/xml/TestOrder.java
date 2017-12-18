@@ -34,12 +34,11 @@ import com.phei.netty.protocol.http.xml.pojo.OrderFactory;
  * @version 1.0
  */
 public class TestOrder {
-
 	private IBindingFactory factory = null;
 	private StringWriter writer = null;
 	private StringReader reader = null;
 	private final static String CHARSET_NAME = "UTF-8";
-
+ 
 	private String encode2Xml(Order order) throws JiBXException, IOException {
 		factory = BindingDirectory.getFactory(Order.class);
 		writer = new StringWriter();

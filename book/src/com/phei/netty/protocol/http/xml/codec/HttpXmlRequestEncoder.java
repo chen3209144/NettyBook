@@ -19,7 +19,10 @@ public class HttpXmlRequestEncoder extends AbstractHttpXmlEncoder<HttpXmlRequest
 
 	@Override
 	protected void encode(ChannelHandlerContext ctx, HttpXmlRequest msg, List<Object> out) throws Exception {
+		System.out.println("HttpXmlRequestEncoder(请求消息编辑器)开始工作.");
+		System.out.println("业务层提交的pojo:{"+msg.getBody()+"}.");
 		ByteBuf body = encode0(ctx, msg.getBody());
+		System.out.println("pojo编码后:{"+body+"}.并将此消息设置为request的消息.");
 		FullHttpRequest request = msg.getRequest();
 		//业务层可能会提交空的request对象.如果业务层提交了空的reauest就要构建一个request对象.并将编码好的xml字符设置为request的消息体.
 		if (request == null) {
@@ -36,6 +39,7 @@ public class HttpXmlRequestEncoder extends AbstractHttpXmlEncoder<HttpXmlRequest
 		}
 		//将编码好的xml字符设置为request的消息体
 		HttpHeaders.setContentLength(request, body.readableBytes());
+		System.out.println("向下一个编辑器递交request对象.");
 		//向低层的编码器递交request,如HttpRequestEncoder编码器可以将请求对象编码为Http请求报文.
 		out.add(request);
 	}

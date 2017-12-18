@@ -37,8 +37,12 @@ public class HttpXmlResponseDecoder extends AbstractHttpXmlDecoder<DefaultFullHt
 
 	@Override
 	protected void decode(ChannelHandlerContext ctx, DefaultFullHttpResponse msg, List<Object> out) throws Exception {
+		System.out.println("HttpXmlResponseDecoder(响应消息解码器(xml->pojo))开始解码,待解码消息");
+		System.out.println("待解码消息:{"+msg.content()+"}");
 		HttpXmlResponse resHttpXmlResponse = new HttpXmlResponse(msg, decode0(ctx, msg.content()));
+		System.out.println("解码后:{"+resHttpXmlResponse.getResult()+"}");
 		//在业务层向递交HttpXmlResponse对象
+		System.out.println("业务层向递交HttpXmlResponse对象(HttpXmlResponseDecoder是最后一个解码器,是消息到达业务层之前最后经过的包解码器.)");
 		out.add(resHttpXmlResponse);
 	}
 

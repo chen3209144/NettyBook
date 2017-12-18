@@ -32,7 +32,9 @@ public class HttpXmlClientHandle extends SimpleChannelInboundHandler<HttpXmlResp
 	@Override
 	//当客户端与服务连接建立完成之后,回调此方法.
 	public void channelActive(ChannelHandlerContext ctx) {
+		System.out.println("客户端与服务器连接建立成功.");
 		HttpXmlRequest request = new HttpXmlRequest(null, OrderFactory.create(123));
+		System.out.println("业务层生成订单pojo并递交pojo:{"+request.getBody()+"}.");
 		//向服务器发送请求报文.此时启动编码过程(业务层调用了发送接口,Netty会启动编码过程,按编码的加入顺序第一个要经过的编码器是HttpXmlRequestEncoder,注意到业务层向此编码递交了空的request对象)
 		ctx.writeAndFlush(request);
 	}
@@ -46,7 +48,7 @@ public class HttpXmlClientHandle extends SimpleChannelInboundHandler<HttpXmlResp
 	@Override
 	//当客户端收到来自服务器的响应消息时回调此方法.
 	protected void messageReceived(ChannelHandlerContext ctx, HttpXmlResponse msg) throws Exception {
-		System.out.println("The client receive response of http header is : " + msg.getHttpResponse().headers().names());
-		System.out.println("The client receive response of http body is : " + msg.getResult());
+		System.out.println("客户端收到的响应报文为:{" + msg.getHttpResponse().headers().names()+"}");
+		System.out.println("客户端将消息解码为pojo:{" + msg.getResult()+"}");
 	}
 }

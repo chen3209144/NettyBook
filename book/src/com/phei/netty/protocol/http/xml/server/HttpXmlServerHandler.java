@@ -52,8 +52,9 @@ public class HttpXmlServerHandler extends SimpleChannelInboundHandler<HttpXmlReq
 	public void messageReceived(final ChannelHandlerContext ctx, HttpXmlRequest xmlRequest) throws Exception {
 		HttpRequest request = xmlRequest.getRequest();
 		Order order = (Order) xmlRequest.getBody();
-		System.out.println("Http server receive request : " + order);
+		System.out.println("服务器收到客户端消息:{" + order+"}");
 		dobusiness(order);
+		System.out.println("业务处理后:{" + order+"},并发送此消息.");
 		//业务层调用消息(响应消息)发送接口,此时Netty会启动编码过程.
 		ChannelFuture future = ctx.writeAndFlush(new HttpXmlResponse(null, order));
 		if (!isKeepAlive(request)) {
@@ -61,6 +62,7 @@ public class HttpXmlServerHandler extends SimpleChannelInboundHandler<HttpXmlReq
 				@SuppressWarnings("rawtypes")
 				//响应消息发送完成会触了此方法.
 				public void operationComplete(Future future) throws Exception {
+					System.out.println("服务器响应消息发送完成.");
 					ctx.close();
 				}
 			});

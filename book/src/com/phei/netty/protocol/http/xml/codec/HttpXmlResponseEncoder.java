@@ -40,8 +40,11 @@ public class HttpXmlResponseEncoder extends AbstractHttpXmlEncoder<HttpXmlRespon
 	 * .ChannelHandlerContext, java.lang.Object, java.util.List)
 	 */
 	protected void encode(ChannelHandlerContext ctx, HttpXmlResponse msg, List<Object> out) throws Exception {
+		System.out.println("业务层发送了响应消息,消息到达第一个编辑器HttpXmlResponseEncoder(响应消息编辑器)");
 		//将业务层递交的pojo(HttpXmlResponseEncoder是响应消息经过的第一个编码器,会直接收到业务层的消息)转换为xml字符串.
+		System.out.println("业务层递交的pojo{"+msg.getResult()+"}");
 		ByteBuf body = encode0(ctx, msg.getResult());
+		System.out.println("对pojo进行编码{"+body+"}");
 		FullHttpResponse response = msg.getHttpResponse();
 		//业务层可能会递交空的reponse对象.
 		if (response == null) {
@@ -53,6 +56,7 @@ public class HttpXmlResponseEncoder extends AbstractHttpXmlEncoder<HttpXmlRespon
 		response.headers().set(CONTENT_TYPE, "text/xml");
 		//将解析好的xml设置为响应对象的消息体.
 		setContentLength(response, body.readableBytes());
+		System.out.println("将编辑好的消息设置为response的消息体,并向下一个编辑器递交response对象");
 		//将response递交给下一个编码器,如HttpResponseEncoder可以将response编码为Http响应报文.
 		out.add(response);
 	}
